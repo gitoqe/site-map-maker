@@ -1,0 +1,23 @@
+{
+  "name": "site-map-maker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gitoqe/site-map-maker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gitoqe/site-map-maker/issues"
+  },
+  "homepage": "https://github.com/gitoqe/site-map-maker#readme",
+  "dependencies": {
+    "htmlparser": "^1.7.7"
+  }
+}
