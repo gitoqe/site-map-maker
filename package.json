@@ -17,5 +17,7 @@
     "url": "https://github.com/gitoqe/site-map-maker/issues"
   },
   "homepage": "https://github.com/gitoqe/site-map-maker#readme",
-  "dependencies": {}
+  "dependencies": {
+    "dom-parser": "^0.1.6"
+  }
 }
