@@ -14,3 +14,5 @@ used links:
     * https://stackoverflow.com/questions/38533580/nodejs-how-to-promisify-http-request-reject-got-called-two-times
 1. writing files
     * https://stackoverflow.com/questions/2496710/writing-files-in-node-js
+1. promises
+    * https://learn.javascript.ru/promise-chaining

@@ -1,5 +1,6 @@
 const http = require("http"); // requests
 const fs = require("fs"); // filesystem
+const DomParser = require("dom-parser");
 
 let URL = process.argv[2].toLowerCase();
 let patternRegExpURL = process.argv[3]
@@ -24,18 +25,15 @@ const options = {
 };
 
 /**
- * Make HTTP request and get 
+ * Make HTTP request and get
  * @param {object} params Parameters for HTTP request
  * @returns Promise
  */
 function httpRequest(params) {
-
   console.log("]>>>> FUNCTION");
   return new Promise((resolve, reject) => {
-
     console.log(">]>>> PROMISE");
     const req = http.request(params, (res) => {
-
       console.log(">>]>> REQUEST");
       // check response code
       if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -65,7 +63,7 @@ function httpRequest(params) {
       });
     });
 
-    // if we have error with request
+    // if we have an error with request
     req.on("error", (error) => {
       reject(error);
     });
@@ -74,14 +72,45 @@ function httpRequest(params) {
   });
 }
 
+let linksJSON = [];
+
 httpRequest(options).then((result) => {
   console.log(">>>>>]]]] FIN :O");
+  // raw file
+  // TODO rewrite as function
   fs.writeFile(`${__dirname}/parseResults/raw`, result, (err) => {
     if (err) {
       return console.log(`[✖] error with save: ${err}`);
     } else {
       console.log(`[✔] File saved as: ${__dirname}/parseResults/raw`);
-      //console.log(informationChunk++);
     }
   });
+
+  // links file
+  let parser = new DomParser();
+
+  let dom = parser.parseFromString(result);
+  console.log(typeof dom);
+  let links = dom.getElementsByTagName("a");
+  console.log(links);
+  console.log(links.length);
+  console.log(typeof links[1]);
+  console.log(links[1].attributes);
+  console.log(links[1].textContent);
+  console.log(links[1].getAttribute("href"));
+  links.forEach((el) => {
+    linksJSON.push({
+      
+    })
+  });
+
+  // TODO same: rewrite as function
+  fs.writeFile(`${__dirname}/parseResults/links.json`, JSON.stringify(linksJSON), (err) => {
+    if (err) {
+      return console.log(`[✖] error with save: ${err}`);
+    } else {
+      console.log(`[✔] File saved as: ${__dirname}/parseResults/links.json`);
+      
+    }
+  }); 
 });
