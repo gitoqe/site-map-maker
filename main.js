@@ -30,11 +30,14 @@ const options = {
  * @returns Promise
  */
 function httpRequest(params) {
-  console.log("]>>>> FUNCTION");
+  //console.log("]>>>> FUNCTION");
+
   return new Promise((resolve, reject) => {
-    console.log(">]>>> PROMISE");
+    //console.log(">]>>> PROMISE");
+
     const req = http.request(params, (res) => {
-      console.log(">>]>> REQUEST");
+      //console.log(">>]>> REQUEST");
+
       // check response code
       if (res.statusCode < 200 || res.statusCode >= 300) {
         // error code - reject promise
@@ -44,7 +47,8 @@ function httpRequest(params) {
       // saving data
       let rawData = "";
       res.on("data", (dataChunk) => {
-        console.log(">>>]> DATA OBTAINING");
+        //console.log(">>>]> DATA OBTAINING");
+
         rawData += dataChunk;
       });
 
@@ -53,7 +57,7 @@ function httpRequest(params) {
         try {
           //console.log(rawData);
           //rawData = JSON.parse(rawData.toString());
-          console.log(">>>>] DATA PARsING");
+          //console.log(">>>>] DATA PARsING");
         } catch (error) {
           // error -> reject with error
           reject(error);
@@ -75,7 +79,8 @@ function httpRequest(params) {
 let linksJSON = [];
 
 httpRequest(options).then((result) => {
-  console.log(">>>>>]]]] FIN :O");
+  //console.log(">>>>>]]]] FIN :O");
+
   // raw file
   // TODO rewrite as function
   fs.writeFile(`${__dirname}/parseResults/raw`, result, (err) => {
@@ -90,27 +95,35 @@ httpRequest(options).then((result) => {
   let parser = new DomParser();
 
   let dom = parser.parseFromString(result);
-  console.log(typeof dom);
+  //console.log(typeof dom);
   let links = dom.getElementsByTagName("a");
+  let title = dom.getElementsByTagName("title");
+  console.log(title); //['text'])
+  /*
   console.log(links);
   console.log(links.length);
   console.log(typeof links[1]);
   console.log(links[1].attributes);
   console.log(links[1].textContent);
   console.log(links[1].getAttribute("href"));
-  links.forEach((el) => {
+  */
+  links.forEach((el, index) => {
     linksJSON.push({
-      
-    })
+      resourse: options.hostname,
+      target: el.getAttribute("href"),
+    });
   });
 
   // TODO same: rewrite as function
-  fs.writeFile(`${__dirname}/parseResults/links.json`, JSON.stringify(linksJSON), (err) => {
-    if (err) {
-      return console.log(`[✖] error with save: ${err}`);
-    } else {
-      console.log(`[✔] File saved as: ${__dirname}/parseResults/links.json`);
-      
+  fs.writeFile(
+    `${__dirname}/parseResults/links.json`,
+    JSON.stringify(linksJSON),
+    (err) => {
+      if (err) {
+        return console.log(`[✖] error with save: ${err}`);
+      } else {
+        console.log(`[✔] File saved as: ${__dirname}/parseResults/links.json`);
+      }
     }
-  }); 
+  );
 });
