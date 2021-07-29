@@ -97,8 +97,8 @@ httpRequest(options).then((result) => {
   let dom = parser.parseFromString(result);
   //console.log(typeof dom);
   let links = dom.getElementsByTagName("a");
-  let title = dom.getElementsByTagName("title");
-  console.log(title); //['text'])
+  let pageTitle = getTitleFromRawHTMl(result);
+
   /*
   console.log(links);
   console.log(links.length);
@@ -110,6 +110,7 @@ httpRequest(options).then((result) => {
   links.forEach((el, index) => {
     linksJSON.push({
       resourse: options.hostname,
+      resourseTitle: pageTitle,
       target: el.getAttribute("href"),
     });
   });
@@ -127,3 +128,10 @@ httpRequest(options).then((result) => {
     }
   );
 });
+
+let getTitleFromRawHTMl = function (rawData) {
+  let result = rawData.match(/<[titleTITLE]*>[\s\S]+<\/[titleTITLE]*>/);
+  result = result[0].slice(7, -8);
+  //console.log(result)
+  return result;
+};
