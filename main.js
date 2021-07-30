@@ -25,7 +25,7 @@ const options = {
 };
 
 /**
- * Make HTTP request and get
+ * HTTP GET request
  * @param {object} params Parameters for HTTP request
  * @returns Promise
  */
@@ -78,54 +78,61 @@ function httpRequest(params) {
 
 let linksJsonFile = {};
 
-httpRequest(options).then((result) => {
-  //console.log(">>>>>]]]] FIN :O");
-
-  // raw file
-  // TODO rewrite as function
-  fs.writeFile(`${__dirname}/parseResults/raw`, result, (err) => {
-    if (err) {
-      return console.log(`[✖] error with save: ${err}`);
-    } else {
-      console.log(`[✔] File saved as: ${__dirname}/parseResults/raw`);
-    }
-  });
-
-  // TODO rewrite as function - form JSON object
-  let linksResourseUrl = options.hostname // FIXME rewrite as function argument
-  let parser = new DomParser();
-
-  let dom = parser.parseFromString(result);
-  //console.log(typeof dom);
-  let links = dom.getElementsByTagName("a");
-  let pageTitle = getTitleFromRawHTMl(result);
-
-  // base element
-  linksJsonFile['baseUrl'] = options.hostname
-  linksJsonFile[linksResourseUrl] = [];
-  //console.log(Object.keys(linksJsonFile))
-
-  // TODO links filter
-
-  links.forEach((el, index) => {
-    linksJsonFile[linksResourseUrl].push({
-      target: el.getAttribute("href"),
-    });
-  });
-
-  // TODO same: rewrite as function
-  fs.writeFile(
-    `${__dirname}/parseResults/links.json`,
-    JSON.stringify(linksJsonFile),
-    (err) => {
+/**
+ * Make HTTP request
+ * @param {*} requestOptions Options for request: hostname, path, method
+ */
+function makeRequest(requestOptions){
+  httpRequest(requestOptions).then((result) => {
+    //console.log(">>>>>]]]] FIN :O");
+  
+    // raw file
+    // TODO rewrite as function
+    fs.writeFile(`${__dirname}/parseResults/raw`, result, (err) => {
       if (err) {
         return console.log(`[✖] error with save: ${err}`);
       } else {
-        console.log(`[✔] File saved as: ${__dirname}/parseResults/links.json`);
+        console.log(`[✔] File saved as: ${__dirname}/parseResults/raw`);
       }
-    }
-  );
-});
+    });
+  
+    // TODO rewrite as function - form JSON object
+    let linksResourseUrl = requestOptions.hostname // FIXME rewrite as function argument
+    let parser = new DomParser();
+  
+    let dom = parser.parseFromString(result);
+    //console.log(typeof dom);
+    let links = dom.getElementsByTagName("a");
+    let pageTitle = getTitleFromRawHTMl(result);
+  
+    // base element
+    linksJsonFile['baseUrl'] = requestOptions.hostname
+    linksJsonFile[linksResourseUrl] = [];
+    //console.log(Object.keys(linksJsonFile))
+  
+    // TODO links filter
+  
+    links.forEach((el, index) => {
+      linksJsonFile[linksResourseUrl].push({
+        target: el.getAttribute("href"),
+      });
+    });
+  
+    // TODO same: rewrite as function
+    fs.writeFile(
+      `${__dirname}/parseResults/links.json`,
+      JSON.stringify(linksJsonFile),
+      (err) => {
+        if (err) {
+          return console.log(`[✖] error with save: ${err}`);
+        } else {
+          console.log(`[✔] File saved as: ${__dirname}/parseResults/links.json`);
+        }
+      }
+    );
+  });
+}
+
 
 let getTitleFromRawHTMl = function (rawData) {
   let result = rawData.match(/<[titleTITLE]*>[\s\S]+<\/[titleTITLE]*>/);
@@ -133,3 +140,5 @@ let getTitleFromRawHTMl = function (rawData) {
   //console.log(result)
   return result;
 };
+
+makeRequest(options)
