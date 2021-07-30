@@ -79,66 +79,66 @@ function httpRequest(params) {
 let linksJsonFile = {};
 
 /**
+ * Writes data into subDir folder wit name
+ * @param {*} data What to write
+ * @param {String} fileName Name of file
+ * @param {String} subDir Where to save
+ */
+function writeToFile(data, fileName, subDir = "") {
+  let path =
+    subDir != ""
+      ? `${__dirname}/${subDir}/${fileName}`
+      : `${__dirname}/${fileName}`;
+  fs.writeFile(path, data, (err) => {
+    if (err) {
+      return console.log(`[✖] error with save: ${err}`);
+    } else {
+      console.log(`[✔] File saved as: ${path}`);
+    }
+  });
+}
+
+/**
  * Make HTTP request
  * @param {*} requestOptions Options for request: hostname, path, method
  */
-function makeRequest(requestOptions){
+function makeRequest(requestOptions) {
   httpRequest(requestOptions).then((result) => {
-    //console.log(">>>>>]]]] FIN :O");
-  
     // raw file
-    // TODO rewrite as function
-    fs.writeFile(`${__dirname}/parseResults/raw`, result, (err) => {
-      if (err) {
-        return console.log(`[✖] error with save: ${err}`);
-      } else {
-        console.log(`[✔] File saved as: ${__dirname}/parseResults/raw`);
-      }
-    });
-  
+    writeToFile(result, "raw", "parseResults");
+
     // TODO rewrite as function - form JSON object
-    let linksResourseUrl = requestOptions.hostname // FIXME rewrite as function argument
+    let linksResourseUrl = requestOptions.hostname; // FIXME rewrite as function argument
     let parser = new DomParser();
-  
+
     let dom = parser.parseFromString(result);
     //console.log(typeof dom);
     let links = dom.getElementsByTagName("a");
     let pageTitle = getTitleFromRawHTMl(result);
-  
+
     // base element
-    linksJsonFile['baseUrl'] = requestOptions.hostname
+    linksJsonFile["baseUrl"] = requestOptions.hostname;
     linksJsonFile[linksResourseUrl] = [];
     //console.log(Object.keys(linksJsonFile))
-  
+
     // TODO links filter
-  
+    // TODO rewrite as function
     links.forEach((el, index) => {
       linksJsonFile[linksResourseUrl].push({
         target: el.getAttribute("href"),
       });
     });
-  
-    // TODO same: rewrite as function
-    fs.writeFile(
-      `${__dirname}/parseResults/links.json`,
-      JSON.stringify(linksJsonFile),
-      (err) => {
-        if (err) {
-          return console.log(`[✖] error with save: ${err}`);
-        } else {
-          console.log(`[✔] File saved as: ${__dirname}/parseResults/links.json`);
-        }
-      }
-    );
+
+    // links.json file
+    writeToFile(JSON.stringify(linksJsonFile), "links.json", "parseResults");
   });
 }
 
-
-let getTitleFromRawHTMl = function (rawData) {
+function getTitleFromRawHTMl(rawData) {
   let result = rawData.match(/<[titleTITLE]*>[\s\S]+<\/[titleTITLE]*>/);
   result = result[0].slice(7, -8);
   //console.log(result)
   return result;
-};
+}
 
-makeRequest(options)
+makeRequest(options);
