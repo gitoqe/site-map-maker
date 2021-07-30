@@ -76,7 +76,7 @@ function httpRequest(params) {
   });
 }
 
-let linksJSON = [];
+let linksJsonFile = {};
 
 httpRequest(options).then((result) => {
   //console.log(">>>>>]]]] FIN :O");
@@ -91,7 +91,8 @@ httpRequest(options).then((result) => {
     }
   });
 
-  // links file
+  // TODO rewrite as function - form JSON object
+  let linksResourseUrl = options.hostname // FIXME rewrite as function argument
   let parser = new DomParser();
 
   let dom = parser.parseFromString(result);
@@ -99,18 +100,15 @@ httpRequest(options).then((result) => {
   let links = dom.getElementsByTagName("a");
   let pageTitle = getTitleFromRawHTMl(result);
 
-  /*
-  console.log(links);
-  console.log(links.length);
-  console.log(typeof links[1]);
-  console.log(links[1].attributes);
-  console.log(links[1].textContent);
-  console.log(links[1].getAttribute("href"));
-  */
+  // base element
+  linksJsonFile['baseUrl'] = options.hostname
+  linksJsonFile[linksResourseUrl] = [];
+  //console.log(Object.keys(linksJsonFile))
+
+  // TODO links filter
+
   links.forEach((el, index) => {
-    linksJSON.push({
-      resourse: options.hostname,
-      resourseTitle: pageTitle,
+    linksJsonFile[linksResourseUrl].push({
       target: el.getAttribute("href"),
     });
   });
@@ -118,7 +116,7 @@ httpRequest(options).then((result) => {
   // TODO same: rewrite as function
   fs.writeFile(
     `${__dirname}/parseResults/links.json`,
-    JSON.stringify(linksJSON),
+    JSON.stringify(linksJsonFile),
     (err) => {
       if (err) {
         return console.log(`[✖] error with save: ${err}`);
