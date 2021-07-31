@@ -18,6 +18,6 @@
   },
   "homepage": "https://github.com/gitoqe/site-map-maker#readme",
   "dependencies": {
-    "htmlparser": "^1.7.7"
+    "dom-parser": "^0.1.6"
   }
 }
