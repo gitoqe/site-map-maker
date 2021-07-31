@@ -16,3 +16,5 @@ used links:
     * https://stackoverflow.com/questions/2496710/writing-files-in-node-js
 1. promises
     * https://learn.javascript.ru/promise-chaining
+1. regexp and replace
+    * https://learn.javascript.ru/regexp-methods#str-replace-str-regexp-str-func

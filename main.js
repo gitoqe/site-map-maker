@@ -2,6 +2,7 @@ const http = require("http"); // requests
 const fs = require("fs"); // filesystem
 const DomParser = require("dom-parser");
 
+let parser = new DomParser();
 let URL = process.argv[2].toLowerCase();
 let patternRegExpURL = process.argv[3]
   ? process.argv[3]
@@ -76,8 +77,6 @@ function httpRequest(params) {
   });
 }
 
-let linksJsonFile = {};
-
 /**
  * Writes data into subDir folder wit name
  * @param {*} data What to write
@@ -104,12 +103,14 @@ function writeToFile(data, fileName, subDir = "") {
  */
 function makeRequest(requestOptions) {
   httpRequest(requestOptions).then((result) => {
-    // raw file
+    // saving raw file
     writeToFile(result, "raw", "parseResults");
+
+    //
+    let linksJsonFile = {};
 
     // TODO rewrite as function - form JSON object
     let linksResourseUrl = requestOptions.hostname; // FIXME rewrite as function argument
-    let parser = new DomParser();
 
     let dom = parser.parseFromString(result);
     //console.log(typeof dom);
@@ -117,15 +118,55 @@ function makeRequest(requestOptions) {
     let pageTitle = getTitleFromRawHTMl(result);
 
     // base element
-    linksJsonFile["baseUrl"] = requestOptions.hostname;
+    linksJsonFile["baseUrl"] = linksResourseUrl;
     linksJsonFile[linksResourseUrl] = [];
     //console.log(Object.keys(linksJsonFile))
 
     // TODO links filter
     // TODO rewrite as function
-    links.forEach((el, index) => {
+    const regHTTP = /http[s]?:\/\/www.|http[s]?:\/\//;
+    const regMailto = /mailto:/;
+    const regSlash = /^\//m;
+    const regLikeBasic = new RegExp(
+      `^[a-zA-Z]{1,256}.${linksResourseUrl}\/?|^${linksResourseUrl}\/?`
+    );
+    const regNoslashNourl =
+      /^[-a-zA-Z0-9@%_\+~#=]{1,256}\/|^[-a-zA-Z0-9@%_\+~#=]{1,256}.html/;
+    for (let i = 0; i < links.length; i++) {
+      // extract href from <a>
+      links[i] = links[i].getAttribute("href");
+
+      // change / at the start to correct form with Url
+      links[i] = links[i].replace(regSlash, `${linksResourseUrl}/`);
+
+      // correct all links starting with /
+      if (links[i].search(regNoslashNourl) != -1) {
+        links[i] = `${linksResourseUrl}/` + links[i];
+      }
+
+      // erase http(s):// and www.
+      links[i] = links[i].replace(regHTTP, "");
+
+      // delete links that looks not like original Url
+      if (links[i].search(regLikeBasic) == -1) {
+        console.log(`Link deleted: ${links[i]}`);
+        delete links[i];
+        continue;
+      }
+
+      //delete mailto:
+      if (links[i].search(regMailto) != -1) {
+        console.log(`Link deleted: ${links[i]}`);
+        delete links[i];
+        continue;
+      }
+    }
+    //console.log(links)
+
+    // write to JSON
+    links.forEach((el) => {
       linksJsonFile[linksResourseUrl].push({
-        target: el.getAttribute("href"),
+        target: el, //.getAttribute("href"),
       });
     });
 
