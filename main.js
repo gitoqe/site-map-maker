@@ -106,44 +106,24 @@ function makeRequest(requestOptions) {
     // saving raw file
     writeToFile(result, "raw", "parseResults");
 
-    //
-    let linksJsonFile = {};
+    // building links.json object
+    let linksJson = formJsonObj(requestOptions, result);
 
-    // TODO rewrite as function - form JSON object
-    let linksResourseUrl = requestOptions.hostname; // FIXME rewrite as function argument
-
-    let dom = parser.parseFromString(result);
-    //console.log(typeof dom);
-    let links = dom.getElementsByTagName("a");
-    // FIXME use this in function?
-    let pageTitle = getTitleFromRawHTMl(result);
-
-    // base element
-    linksJsonFile["baseUrl"] = linksResourseUrl;
-    linksJsonFile[linksResourseUrl] = [];
-
-    // TODO links filter
-    links = filterLinks(links, linksResourseUrl);
-
-    // write to JSON
-    links.forEach((el) => {
-      linksJsonFile[linksResourseUrl].push({
-        target: el, //.getAttribute("href"),
-      });
-    });
-
-    // links.json file
-    writeToFile(JSON.stringify(linksJsonFile), "links.json", "parseResults");
+    // saving links.json file
+    writeToFile(JSON.stringify(linksJson), "links.json", "parseResults");
   });
 }
 
+/**
+ * Extract title from html text
+ * @param {string} rawData html text
+ * @returns 
+ */
 function getTitleFromRawHTMl(rawData) {
   let result = rawData.match(/<[titleTITLE]*>[\s\S]+<\/[titleTITLE]*>/);
   result = result[0].slice(7, -8);
-  //console.log(result)
   return result;
 }
-
 
 /**
  * Filter list of links
@@ -191,6 +171,35 @@ function filterLinks(listOfLinks, linksUrl) {
     }
   }
   return listOfLinks;
+}
+
+/**
+ * Make JSON object
+ * @param {*} options Request options
+ * @param {*} data Request answer data
+ * @returns {*} Object in JSON format
+ */
+function formJsonObj(options, data) {
+  // forming object
+  let linksJsonForm = {};
+  let linksResourseUrl = options.hostname;
+
+  let dom = parser.parseFromString(data);
+  let links = dom.getElementsByTagName("a");
+  // FIXME use this in function?
+  let pageTitle = getTitleFromRawHTMl(data);
+  linksJsonForm["baseUrl"] = linksResourseUrl;
+  linksJsonForm[linksResourseUrl] = [];
+
+  links = filterLinks(links, linksResourseUrl);
+
+  // write to JSON
+  links.forEach((el) => {
+    linksJsonForm[linksResourseUrl].push({
+      target: el,
+    });
+  });
+  return linksJsonForm;
 }
 
 makeRequest(options);
