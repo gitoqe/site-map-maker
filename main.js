@@ -115,53 +115,15 @@ function makeRequest(requestOptions) {
     let dom = parser.parseFromString(result);
     //console.log(typeof dom);
     let links = dom.getElementsByTagName("a");
+    // FIXME use this in function?
     let pageTitle = getTitleFromRawHTMl(result);
 
     // base element
     linksJsonFile["baseUrl"] = linksResourseUrl;
     linksJsonFile[linksResourseUrl] = [];
-    //console.log(Object.keys(linksJsonFile))
 
     // TODO links filter
-    // TODO rewrite as function
-    const regHTTP = /http[s]?:\/\/www.|http[s]?:\/\//;
-    const regMailto = /mailto:/;
-    const regSlash = /^\//m;
-    const regLikeBasic = new RegExp(
-      `^[a-zA-Z]{1,256}.${linksResourseUrl}\/?|^${linksResourseUrl}\/?`
-    );
-    const regNoslashNourl =
-      /^[-a-zA-Z0-9@%_\+~#=]{1,256}\/|^[-a-zA-Z0-9@%_\+~#=]{1,256}.html/;
-    for (let i = 0; i < links.length; i++) {
-      // extract href from <a>
-      links[i] = links[i].getAttribute("href");
-
-      // change / at the start to correct form with Url
-      links[i] = links[i].replace(regSlash, `${linksResourseUrl}/`);
-
-      // correct all links starting with /
-      if (links[i].search(regNoslashNourl) != -1) {
-        links[i] = `${linksResourseUrl}/` + links[i];
-      }
-
-      // erase http(s):// and www.
-      links[i] = links[i].replace(regHTTP, "");
-
-      // delete links that looks not like original Url
-      if (links[i].search(regLikeBasic) == -1) {
-        console.log(`Link deleted: ${links[i]}`);
-        delete links[i];
-        continue;
-      }
-
-      //delete mailto:
-      if (links[i].search(regMailto) != -1) {
-        console.log(`Link deleted: ${links[i]}`);
-        delete links[i];
-        continue;
-      }
-    }
-    //console.log(links)
+    links = filterLinks(links, linksResourseUrl);
 
     // write to JSON
     links.forEach((el) => {
@@ -180,6 +142,55 @@ function getTitleFromRawHTMl(rawData) {
   result = result[0].slice(7, -8);
   //console.log(result)
   return result;
+}
+
+
+/**
+ * Filter list of links
+ * @param {*} listOfLinks List of <a> objects
+ * @param {*} linksUrl Webpage url
+ * @returns Filtered list
+ */
+function filterLinks(listOfLinks, linksUrl) {
+  const regHTTP = /http[s]?:\/\/www.|http[s]?:\/\//;
+  const regMailto = /mailto:/;
+  const regSlash = /^\//m;
+  const regLikeBasic = new RegExp(
+    `^[a-zA-Z]{1,256}.${linksUrl}\/?|^${linksUrl}\/?`
+  );
+  const regNoslashNourl =
+    /^[-a-zA-Z0-9@%_\+~#=]{1,256}\/|^[-a-zA-Z0-9@%_\+~#=]{1,256}.html/;
+
+  for (let i = 0; i < listOfLinks.length; i++) {
+    // extract href from <a>
+    listOfLinks[i] = listOfLinks[i].getAttribute("href");
+
+    // change / at the start to correct form with Url
+    listOfLinks[i] = listOfLinks[i].replace(regSlash, `${linksUrl}/`);
+
+    // correct all links starting with /
+    if (listOfLinks[i].search(regNoslashNourl) != -1) {
+      listOfLinks[i] = `${linksUrl}/` + listOfLinks[i];
+    }
+
+    // erase http(s):// and www.
+    listOfLinks[i] = listOfLinks[i].replace(regHTTP, "");
+
+    // delete links that looks not like original Url
+    if (listOfLinks[i].search(regLikeBasic) == -1) {
+      console.log(`Link deleted: ${listOfLinks[i]}`);
+      delete listOfLinks[i];
+      continue;
+    }
+
+    //delete mailto:
+    if (listOfLinks[i].search(regMailto) != -1) {
+      console.log(`Link deleted: ${listOfLinks[i]}`);
+      delete listOfLinks[i];
+      continue;
+    }
+  }
+  return listOfLinks;
 }
 
 makeRequest(options);
