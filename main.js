@@ -27,53 +27,39 @@ const options = {
 
 /**
  * HTTP GET request
- * @param {object} params Parameters for HTTP request
+ * @param {object} requestOptions Parameters for HTTP request
  * @returns Promise
  */
-function httpRequest(params) {
-  //console.log("]>>>> FUNCTION");
-
+function sendHttpRequest(requestOptions) {
   return new Promise((resolve, reject) => {
-    //console.log(">]>>> PROMISE");
-
-    const req = http.request(params, (res) => {
-      //console.log(">>]>> REQUEST");
-
-      // check response code
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        // error code - reject promise
-        return reject(new Error(`Error status code: ${res.statusCode}`));
+    const request = http.request(requestOptions, (response) => {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return reject(new Error(`Error status code: ${response.statusCode}`));
       }
 
       // saving data
       let rawData = "";
-      res.on("data", (dataChunk) => {
-        //console.log(">>>]> DATA OBTAINING");
-
+      response.on("data", (dataChunk) => {
         rawData += dataChunk;
       });
 
       // resolving on end
-      res.on("end", () => {
+      response.on("end", () => {
         try {
-          //console.log(rawData);
           //rawData = JSON.parse(rawData.toString());
-          //console.log(">>>>] DATA PARsING");
         } catch (error) {
-          // error -> reject with error
           reject(error);
         }
-        // parsed successfully -> return resolve
         resolve(rawData);
       });
     });
 
     // if we have an error with request
-    req.on("error", (error) => {
+    request.on("error", (error) => {
       reject(error);
     });
 
-    req.end();
+    request.end();
   });
 }
 
@@ -81,12 +67,12 @@ function httpRequest(params) {
  * Writes data into subDir folder wit name
  * @param {*} data What to write
  * @param {String} fileName Name of file
- * @param {String} subDir Where to save
+ * @param {String} subDirectoryName Where to save
  */
-function writeToFile(data, fileName, subDir = "") {
+function writeFile(data, fileName, subDirectoryName = "") {
   let path =
-    subDir != ""
-      ? `${__dirname}/${subDir}/${fileName}`
+    subDirectoryName != ""
+      ? `${__dirname}/${subDirectoryName}/${fileName}`
       : `${__dirname}/${fileName}`;
   fs.writeFile(path, data, (err) => {
     if (err) {
@@ -99,18 +85,18 @@ function writeToFile(data, fileName, subDir = "") {
 
 /**
  * Make HTTP request
- * @param {*} requestOptions Options for request: hostname, path, method
+ * @param {*} options Options for request: hostname, path, method
  */
-function makeRequest(requestOptions) {
-  httpRequest(requestOptions).then((result) => {
+function makeRequest(options) {
+  sendHttpRequest(options).then((result) => {
     // saving raw file
-    writeToFile(result, "raw", "parseResults");
+    writeFile(result, "raw", "parseResults");
 
     // building links.json object
-    let linksJson = formJsonObj(requestOptions, result);
+    let linksAsObj = parseLinks(options, result);
 
     // saving links.json file
-    writeToFile(JSON.stringify(linksJson), "links.json", "parseResults");
+    writeFile(JSON.stringify(linksAsObj), "links.json", "parseResults");
   });
 }
 
@@ -127,50 +113,50 @@ function getTitleFromRawHTMl(rawData) {
 
 /**
  * Filter list of links
- * @param {*} listOfLinks List of <a> objects
+ * @param {*} list List of <a> objects
  * @param {*} linksUrl Webpage url
  * @returns Filtered list
  */
-function filterLinks(listOfLinks, linksUrl) {
-  const regHTTP = /http[s]?:\/\/www.|http[s]?:\/\//;
-  const regMailto = /mailto:/;
-  const regSlash = /^\//m;
-  const regLikeBasic = new RegExp(
+function filterLinks(list, linksUrl) {
+  const regexpHTTP = /http[s]?:\/\/www.|http[s]?:\/\//;
+  const regexpMailto = /mailto:/;
+  const regexpSlash = /^\//m;
+  const regexpUrlLike = new RegExp(
     `^[a-zA-Z]{1,256}.${linksUrl}\/?|^${linksUrl}\/?`
   );
   const regNoslashNourl =
     /^[-a-zA-Z0-9@%_\+~#=]{1,256}\/|^[-a-zA-Z0-9@%_\+~#=]{1,256}.html/;
 
-  for (let i = 0; i < listOfLinks.length; i++) {
+  for (let i = 0; i < list.length; i++) {
     // extract href from <a>
-    listOfLinks[i] = listOfLinks[i].getAttribute("href");
+    list[i] = list[i].getAttribute("href");
 
     // change / at the start to correct form with Url
-    listOfLinks[i] = listOfLinks[i].replace(regSlash, `${linksUrl}/`);
+    list[i] = list[i].replace(regexpSlash, `${linksUrl}/`);
 
     // correct all links starting with /
-    if (listOfLinks[i].search(regNoslashNourl) != -1) {
-      listOfLinks[i] = `${linksUrl}/` + listOfLinks[i];
+    if (list[i].search(regNoslashNourl) != -1) {
+      list[i] = `${linksUrl}/` + list[i];
     }
 
     // erase http(s):// and www.
-    listOfLinks[i] = listOfLinks[i].replace(regHTTP, "");
+    list[i] = list[i].replace(regexpHTTP, "");
 
     // delete links that looks not like original Url
-    if (listOfLinks[i].search(regLikeBasic) == -1) {
-      console.log(`Link deleted: ${listOfLinks[i]}`);
-      delete listOfLinks[i];
+    if (list[i].search(regexpUrlLike) == -1) {
+      console.log(`Link deleted: ${list[i]}`);
+      delete list[i];
       continue;
     }
 
     //delete mailto:
-    if (listOfLinks[i].search(regMailto) != -1) {
-      console.log(`Link deleted: ${listOfLinks[i]}`);
-      delete listOfLinks[i];
+    if (list[i].search(regexpMailto) != -1) {
+      console.log(`Link deleted: ${list[i]}`);
+      delete list[i];
       continue;
     }
   }
-  return listOfLinks;
+  return list;
 }
 
 /**
@@ -179,27 +165,27 @@ function filterLinks(listOfLinks, linksUrl) {
  * @param {*} data Request answer data
  * @returns {*} Object in JSON format
  */
-function formJsonObj(options, data) {
+function parseLinks(options, data) {
   // forming object
-  let linksJsonForm = {};
-  let linksResourseUrl = options.hostname;
+  let linksObject = {};
+  let resourseUrl = options.hostname;
 
-  let dom = parser.parseFromString(data);
-  let links = dom.getElementsByTagName("a");
+  let parsedDom = parser.parseFromString(data);
+  let listOfLinkNodes = parsedDom.getElementsByTagName("a");
   // FIXME use this in function?
   let pageTitle = getTitleFromRawHTMl(data);
-  linksJsonForm["baseUrl"] = linksResourseUrl;
-  linksJsonForm[linksResourseUrl] = [];
+  linksObject["baseUrl"] = resourseUrl;
+  linksObject[resourseUrl] = [];
 
-  links = filterLinks(links, linksResourseUrl);
+  listOfLinkNodes = filterLinks(listOfLinkNodes, resourseUrl);
 
   // write to JSON
-  links.forEach((el) => {
-    linksJsonForm[linksResourseUrl].push({
-      target: el,
+  listOfLinkNodes.forEach((element) => {
+    linksObject[resourseUrl].push({
+      target: element,
     });
   });
-  return linksJsonForm;
+  return linksObject;
 }
 
 makeRequest(options);
