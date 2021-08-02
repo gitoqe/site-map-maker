@@ -26,6 +26,23 @@ const options = {
 };
 
 /**
+ * Make HTTP request
+ * @param {*} options Options for request: hostname, path, method
+ */
+function makeRequest(options) {
+  sendHttpRequest(options).then((result) => {
+    // saving raw file
+    writeFile(result, "raw", "parseResults");
+
+    // building links.json object
+    let linksAsObj = parseLinks(options, result);
+
+    // saving links.json file
+    writeFile(JSON.stringify(linksAsObj), "links.json", "parseResults");
+  });
+}
+
+/**
  * HTTP GET request
  * @param {object} requestOptions Parameters for HTTP request
  * @returns Promise
@@ -84,26 +101,38 @@ function writeFile(data, fileName, subDirectoryName = "") {
 }
 
 /**
- * Make HTTP request
- * @param {*} options Options for request: hostname, path, method
+ * Make JSON object
+ * @param {*} options Request options
+ * @param {*} data Request answer data
+ * @returns {*} Object in JSON format
  */
-function makeRequest(options) {
-  sendHttpRequest(options).then((result) => {
-    // saving raw file
-    writeFile(result, "raw", "parseResults");
+function parseLinks(options, data) {
+  // forming object
+  let linksObject = {};
+  let resourseUrl = options.hostname;
 
-    // building links.json object
-    let linksAsObj = parseLinks(options, result);
+  let parsedDom = parser.parseFromString(data);
+  let listOfLinkNodes = parsedDom.getElementsByTagName("a");
+  // FIXME use this in function?
+  let pageTitle = getTitleFromRawHTMl(data);
+  linksObject["baseUrl"] = resourseUrl;
+  linksObject[resourseUrl] = [];
 
-    // saving links.json file
-    writeFile(JSON.stringify(linksAsObj), "links.json", "parseResults");
+  listOfLinkNodes = filterLinks(listOfLinkNodes, resourseUrl);
+
+  // write to JSON
+  listOfLinkNodes.forEach((element) => {
+    linksObject[resourseUrl].push({
+      target: element,
+    });
   });
+  return linksObject;
 }
 
 /**
  * Extract title from html text
  * @param {string} rawData html text
- * @returns 
+ * @returns
  */
 function getTitleFromRawHTMl(rawData) {
   let result = rawData.match(/<[titleTITLE]*>[\s\S]+<\/[titleTITLE]*>/);
@@ -157,35 +186,6 @@ function filterLinks(list, linksUrl) {
     }
   }
   return list;
-}
-
-/**
- * Make JSON object
- * @param {*} options Request options
- * @param {*} data Request answer data
- * @returns {*} Object in JSON format
- */
-function parseLinks(options, data) {
-  // forming object
-  let linksObject = {};
-  let resourseUrl = options.hostname;
-
-  let parsedDom = parser.parseFromString(data);
-  let listOfLinkNodes = parsedDom.getElementsByTagName("a");
-  // FIXME use this in function?
-  let pageTitle = getTitleFromRawHTMl(data);
-  linksObject["baseUrl"] = resourseUrl;
-  linksObject[resourseUrl] = [];
-
-  listOfLinkNodes = filterLinks(listOfLinkNodes, resourseUrl);
-
-  // write to JSON
-  listOfLinkNodes.forEach((element) => {
-    linksObject[resourseUrl].push({
-      target: element,
-    });
-  });
-  return linksObject;
 }
 
 makeRequest(options);
