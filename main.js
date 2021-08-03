@@ -53,14 +53,6 @@ function main() {
     path: "/",
     method: "GET",
   };
-  makeRequest(options);
-}
-
-/**
- * Make HTTP request
- * @param {*} options Options for request: hostname, path, method
- */
-function makeRequest(options) {
   sendHttpRequest(options).then((result) => {
     // saving raw file
     writeFile(result, `${options.hostname}-raw`, "parseResults");
