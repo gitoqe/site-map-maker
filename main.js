@@ -32,13 +32,18 @@ const options = {
 function makeRequest(options) {
   sendHttpRequest(options).then((result) => {
     // saving raw file
-    writeFile(result, "raw", "parseResults");
+    writeFile(result, `${options.hostname}-raw`, "parseResults");
 
     // building links.json object
     let linksAsObj = parseLinks(options, result);
 
     // saving links.json file
-    writeFile(JSON.stringify(linksAsObj), "links.json", "parseResults");
+    writeFile(
+      JSON.stringify(linksAsObj),
+      `${options.hostname}-links.json`,
+      "parseResults"
+    );
+    // FIXME -> writeFile(JSON.stringify(linksAsObj), `${options.hostname}-links.json`, "parseResults");
   });
 }
 
