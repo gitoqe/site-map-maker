@@ -1,14 +1,15 @@
 const http = require("http"); // requests
 const fs = require("fs"); // filesystem
 const DomParser = require("dom-parser");
+const parser = new DomParser();
 
-let parser = new DomParser();
-let URL = process.argv[2].toLowerCase();
-let patternRegExpURL = process.argv[3]
+const URL = process.argv[2].toLowerCase();
+
+let regexpCorrectUrl = process.argv[3]
   ? process.argv[3]
   : /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 
-if (patternRegExpURL.test(URL)) {
+if (regexpCorrectUrl.test(URL)) {
   console.log(`[✔] Correct URL: ${URL}`);
 } else {
   console.log(`[✖] incorrect URL: ${URL}`);
@@ -17,13 +18,43 @@ if (patternRegExpURL.test(URL)) {
   return;
 }
 
-// https://nodejs.dev/learn/making-http-requests-with-nodejs
-// options for request
-const options = {
-  hostname: URL,
-  path: "/",
-  method: "GET",
-};
+/*
+    https://nodejs.org/api/fs.html#fs_fspromises_readdir_path_options
+    https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
+
+    TODO
+    1. check if folder of project exists
+      + check name of folder
+      + create new folder with name `hostname-1` like
+        https://nodejs.org/api/fs.html#fs_fspromises_mkdir_path_options
+      + store data here
+      - create new folder with name `hostname-1` like
+      - store data here
+    TODO  
+    
+    2. change type of operation from truncate & write to read & append
+    TODO
+    3. check if the current file is the first (base of webpage)
+      + first? -> #1 & #2
+      - not first -> add info to base file
+        https://nodejs.org/api/fs.html#fs_file_system_flags 'a' flag
+    */
+
+main();
+
+function main() {
+  let numberOfRequests = 0;
+  let depthOfParsing = 0;
+  // https://nodejs.dev/learn/making-http-requests-with-nodejs
+  // options for request
+
+  let options = {
+    hostname: URL,
+    path: "/",
+    method: "GET",
+  };
+  makeRequest(options);
+}
 
 /**
  * Make HTTP request
@@ -192,5 +223,3 @@ function filterLinks(list, linksUrl) {
   }
   return list;
 }
-
-makeRequest(options);
