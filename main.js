@@ -4,19 +4,29 @@ const DomParser = require("dom-parser");
 const parser = new DomParser();
 
 const URL = process.argv[2].toLowerCase();
+const DEPTH = process.argv[3];
 
-let regexpCorrectUrl = process.argv[3]
+main(URL, DEPTH);
+
+/**
+ * Check is URL correct or not?
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isUrlCorrect(url) {
+  const regexpCorrectUrl = /*  process.argv[3]
   ? process.argv[3]
-  : /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+  :  */ /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 
-if (regexpCorrectUrl.test(URL)) {
-  console.log(`[✔] Correct URL: ${URL}`);
-  main();
-} else {
-  console.log(`[✖] incorrect URL: ${URL}`);
-  console.log(`Mask is: HTTP(s)://abcd.efg.xyz/`);
-  console.log(`You can set your own regexp as second argument`);
-  return;
+  if (regexpCorrectUrl.test(url)) {
+    console.log(`[✔] Correct URL: ${url}`);
+    return true;
+  } else {
+    console.log(`[✖] incorrect URL: ${url}`);
+    console.log(`Mask is: HTTP(s)://abcd.efg.xyz/`);
+    console.log(`You can set your own regexp as second argument`);
+    return false;
+  }
 }
 
 /*
@@ -34,7 +44,22 @@ if (regexpCorrectUrl.test(URL)) {
       https://nodejs.org/api/fs.html#fs_file_system_flags 'a' flag
 */
 
-function main() {
+/**
+ *
+ * @param {string} url
+ * @param {number} depthOfParsing
+ * @returns
+ */
+function main(url, depthOfParsing = 1) {
+  // 1. check URL
+  if (!isUrlCorrect(url)) return;
+
+  let options = {
+    hostname: URL,
+    path: "/",
+    method: "GET",
+  };
+
   /**
    * TODO
     1. check if folder of project exists
@@ -47,12 +72,6 @@ function main() {
    */
 
   // https://flaviocopes.com/how-to-check-if-file-exists-node/
-
-  let options = {
-    hostname: URL,
-    path: "/",
-    method: "GET",
-  };
 
   try {
     // TODO несколько обращений к ресурсу - несколько каталогов ?
@@ -81,8 +100,6 @@ function main() {
     console.log("error occured :Z");
   }
 
-  let numberOfRequests = 0;
-  let depthOfParsing = 0;
   // https://nodejs.dev/learn/making-http-requests-with-nodejs
   // options for request
 
