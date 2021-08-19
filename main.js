@@ -11,6 +11,7 @@ let regexpCorrectUrl = process.argv[3]
 
 if (regexpCorrectUrl.test(URL)) {
   console.log(`[✔] Correct URL: ${URL}`);
+  main();
 } else {
   console.log(`[✖] incorrect URL: ${URL}`);
   console.log(`Mask is: HTTP(s)://abcd.efg.xyz/`);
@@ -19,10 +20,23 @@ if (regexpCorrectUrl.test(URL)) {
 }
 
 /*
-    https://nodejs.org/api/fs.html#fs_fspromises_readdir_path_options
-    https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
+  https://nodejs.org/api/fs.html#fs_fspromises_readdir_path_options
+  https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
+  @startuml
+  Bob -> Alice : hello
+  @enduml
+  
+  2. change type of operation from truncate & write to read & append
+  TODO
+  3. check if the current file is the first (base of webpage)
+    + first? -> #1 & #2
+    - not first -> add info to base file
+      https://nodejs.org/api/fs.html#fs_file_system_flags 'a' flag
+*/
 
-    TODO
+function main() {
+  /**
+   * TODO
     1. check if folder of project exists
       + check name of folder
       + create new folder with name `hostname-1` like
@@ -30,42 +44,57 @@ if (regexpCorrectUrl.test(URL)) {
       + store data here
       - create new folder with name `hostname-1` like
       - store data here
-    TODO  
-    
-    2. change type of operation from truncate & write to read & append
-    TODO
-    3. check if the current file is the first (base of webpage)
-      + first? -> #1 & #2
-      - not first -> add info to base file
-        https://nodejs.org/api/fs.html#fs_file_system_flags 'a' flag
-    */
+   */
 
-main();
-
-function main() {
-  let numberOfRequests = 0;
-  let depthOfParsing = 0;
-  // https://nodejs.dev/learn/making-http-requests-with-nodejs
-  // options for request
+  // https://flaviocopes.com/how-to-check-if-file-exists-node/
 
   let options = {
     hostname: URL,
     path: "/",
     method: "GET",
   };
+
+  try {
+    // TODO несколько обращений к ресурсу - несколько каталогов ?
+
+    // TODO разбивка URL по слешам -> сохранение папки с именем + время/дата обращения ?
+
+    // TODO сохранение пути к файлам в отдельную переменную, передача при writeFile
+
+    if (fs.existsSync(`./parseResults/${options.hostname}`)) {
+      console.log("[✔] Directory exists");
+    } else {
+      console.log(
+        "[ ] Directory for files does not exists\n[ ] Creating directory"
+      );
+      //fs.mkdir(`./parsedResults/${options.hostname}`);
+
+      fs.mkdir(`${__dirname}/parseResults/${options.hostname}`, (err) => {
+        if (err) {
+          return console.error(err);
+        }
+        console.log("[✔] Directory created successfully!");
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    console.log("error occured :Z");
+  }
+
+  let numberOfRequests = 0;
+  let depthOfParsing = 0;
+  // https://nodejs.dev/learn/making-http-requests-with-nodejs
+  // options for request
+
   sendHttpRequest(options).then((result) => {
     // saving raw file
-    writeFile(result, `${options.hostname}-raw`, "parseResults");
+    writeFile(result, `${options.hostname}`, `raw`);
 
     // building links.json object
     let linksAsObj = parseLinks(options, result);
 
     // saving links.json file
-    writeFile(
-      JSON.stringify(linksAsObj),
-      `${options.hostname}-links.json`,
-      "parseResults"
-    );
+    writeFile(JSON.stringify(linksAsObj), `${options.hostname}`, `links.json`);
     // FIXME -> writeFile(JSON.stringify(linksAsObj), `${options.hostname}-links.json`, "parseResults");
   });
 }
@@ -111,14 +140,11 @@ function sendHttpRequest(requestOptions) {
 /**
  * Writes data into subDir folder wit name
  * @param {*} data What to write
- * @param {String} fileName Name of file
- * @param {String} subDirectoryName Where to save
+ * @param {String} resourseName Name of file
+ * @param {String} fileSubName Where to save
  */
-function writeFile(data, fileName, subDirectoryName = "") {
-  let path =
-    subDirectoryName != ""
-      ? `${__dirname}/${subDirectoryName}/${fileName}`
-      : `${__dirname}/${fileName}`;
+function writeFile(data, resourseName, fileSubName) {
+  let path = `${__dirname}/parseResults/${resourseName}/${resourseName}-${fileSubName}`;
   fs.writeFile(path, data, (err) => {
     if (err) {
       return console.log(`[✖] error with save: ${err}`);
@@ -213,5 +239,11 @@ function filterLinks(list, linksUrl) {
       continue;
     }
   }
+
+  // erase duplicates
+  list = list.filter(function (item, pos) {
+    return list.indexOf(item) == pos;
+  });
+
   return list;
 }
