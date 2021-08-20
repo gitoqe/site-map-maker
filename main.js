@@ -72,6 +72,7 @@ function main(url, depthOfParsing = 1) {
   let today = new Date();
   const directoryName =
     hostname +
+    path.split('/').join('-') +
     "-" +
     today.getDate() +
     (today.getMonth() + 1) +
