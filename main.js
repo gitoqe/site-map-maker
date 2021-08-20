@@ -23,7 +23,7 @@ function isUrlCorrect(url) {
     return true;
   } else {
     console.log(`[✖] incorrect URL: ${url}`);
-    console.log(`Mask is: https://ihateregex.io/expr/url/`);
+    console.log(`Used mask is: https://ihateregex.io/expr/url/`);
     //console.log(`You can set your own regexp as second argument`);
     return false;
   }
@@ -53,25 +53,39 @@ function isUrlCorrect(url) {
 function main(url, depthOfParsing = 1) {
   // 1. check URL
   if (!isUrlCorrect(url)) return;
+  url = url.replace(/http[s]?:\/\/www.|http[s]?:\/\//, "");
 
-  // 2. Creating folder for results
-  // Name contains: 
-  // TODO cut URL by "/" -> разбивка URL по слешам -> сохранение папки с именем + время/дата обращения ?
-  let today = new Date()
-  let launchTime = 5;
-   console.log(today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate())
-  console.log(today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds())
+  // 2. Creating directory for results. name: domain name + launch date and time
+  // 2.1 Cut out domain name
+  const domainName = url.split("/")[0];
+  //console.log(domainName);
+
+  // 2.2 Add current time and date to directiry name
+  let today = new Date();
+  const directoryName =
+    domainName +
+    "-" +
+    today.getDate() +
+    "." +
+    (today.getMonth() + 1) +
+    today.getFullYear() +
+    "." +
+    today.getHours() +
+    today.getMinutes() +
+    today.getSeconds();
+  //console.log(directoryName);
+
   // TODO multiple calls for resource -> different directories?
   // TODO сохранение пути к файлам в отдельную переменную, передача при writeFile
 
-  let options = {
-    hostname: URL,
+  let requestOptions = {
+    hostname: url,
     path: "/",
     method: "GET",
   };
 
   /**
-   * TODO
+   TODO
     1. check if folder of project exists
       + check name of folder
       + create new folder with name `hostname-1` like
@@ -84,38 +98,41 @@ function main(url, depthOfParsing = 1) {
   // https://flaviocopes.com/how-to-check-if-file-exists-node/
 
   try {
-    if (fs.existsSync(`./parseResults/${options.hostname}`)) {
+    if (fs.existsSync(`./parseResults/${directoryName}`)) {
       console.log("[✔] Directory exists");
     } else {
       console.log(
-        "[ ] Directory for files does not exists\n[ ] Creating directory"
+        `[ ] Directory for files does not exists. Creating.`
       );
-      //fs.mkdir(`./parsedResults/${options.hostname}`);
-
-      fs.mkdir(`${__dirname}/parseResults/${options.hostname}`, (err) => {
+      fs.mkdir(`${__dirname}/parseResults/${directoryName}`, (err) => {
         if (err) {
           return console.error(err);
         }
-        console.log("[✔] Directory created successfully!");
+        console.log(`[✔] Directory "${directoryName}" created successfully!`);
       });
     }
   } catch (err) {
+    console.log("[✖] Error with directory creation:");
     console.error(err);
-    console.log("error occured :Z");
   }
 
   // https://nodejs.dev/learn/making-http-requests-with-nodejs
   // options for request
 
-  sendHttpRequest(options).then((result) => {
+  sendHttpRequest(requestOptions).then((result) => {
     // saving raw file
-    writeFile(result, `${options.hostname}`, `raw`);
+    writeFile(result, directoryName, domainName, `original-raw`);
 
     // building links.json object
-    let linksAsObj = parseLinks(options, result);
+    let linksAsObj = parseLinks(requestOptions, result);
 
     // saving links.json file
-    writeFile(JSON.stringify(linksAsObj), `${options.hostname}`, `links.json`);
+    writeFile(
+      JSON.stringify(linksAsObj),
+      directoryName,
+      domainName,
+      `original-links.json`
+    );
     // FIXME -> writeFile(JSON.stringify(linksAsObj), `${options.hostname}-links.json`, "parseResults");
   });
 }
@@ -161,11 +178,12 @@ function sendHttpRequest(requestOptions) {
 /**
  * Writes data into subDir folder wit name
  * @param {*} data What to write
- * @param {String} resourseName Name of file
- * @param {String} fileSubName Where to save
+ * @param {String} directoryName Name of directory
+ * @param {String} fileName Name of file
+ * @param {String} fileSubName What is inside
  */
-function writeFile(data, resourseName, fileSubName) {
-  let path = `${__dirname}/parseResults/${resourseName}/${resourseName}-${fileSubName}`;
+function writeFile(data, directoryName, fileName, fileSubName) {
+  let path = `${__dirname}/parseResults/${directoryName}/${fileName}-${fileSubName}`;
   fs.writeFile(path, data, (err) => {
     if (err) {
       return console.log(`[✖] error with save: ${err}`);
