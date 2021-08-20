@@ -35,14 +35,25 @@ function isUrlCorrect(url) {
   @startuml
   Bob -> Alice : hello
   @enduml
-  
-  2. change type of operation from truncate & write to read & append
-  TODO
-  3. check if the current file is the first (base of webpage)
-    + first? -> #1 & #2
-    - not first -> add info to base file
-      https://nodejs.org/api/fs.html#fs_file_system_flags 'a' flag
 */
+
+/**
+ *
+ * @param {String} url
+ * @returns hostname, path
+ *
+ *
+ * https://en.wikipedia.org/wiki/URL
+ */
+function disassembleUrl(url) {
+  url = url.replace(/http[s]?:\/\/www.|http[s]?:\/\//, "");
+  let hostname = url.split("/")[0];
+  let path = "/";
+  if (url.indexOf("/") != -1) {
+    path = url.slice(url.indexOf("/"));
+  }
+  return { hostname, path };
+}
 
 /**
  *
@@ -51,22 +62,18 @@ function isUrlCorrect(url) {
  * @returns
  */
 function main(url, depthOfParsing = 1) {
-  // 1. check URL
+  // 1. Check URL
   if (!isUrlCorrect(url)) return;
-  url = url.replace(/http[s]?:\/\/www.|http[s]?:\/\//, "");
 
-  // 2. Creating directory for results. name: domain name + launch date and time
-  // 2.1 Cut out domain name
-  const domainName = url.split("/")[0];
-  //console.log(domainName);
+  // 2.1 Extract hostname and path from url
+  const { hostname, path } = disassembleUrl(url);
 
   // 2.2 Add current time and date to directiry name
   let today = new Date();
   const directoryName =
-    domainName +
+    hostname +
     "-" +
     today.getDate() +
-    "." +
     (today.getMonth() + 1) +
     today.getFullYear() +
     "." +
@@ -75,35 +82,18 @@ function main(url, depthOfParsing = 1) {
     today.getSeconds();
   //console.log(directoryName);
 
-  // TODO multiple calls for resource -> different directories?
-  // TODO сохранение пути к файлам в отдельную переменную, передача при writeFile
-
   let requestOptions = {
-    hostname: url,
-    path: "/",
+    hostname: hostname,
+    path: path,
     method: "GET",
   };
-
-  /**
-   TODO
-    1. check if folder of project exists
-      + check name of folder
-      + create new folder with name `hostname-1` like
-        https://nodejs.org/api/fs.html#fs_fspromises_mkdir_path_options
-      + store data here
-      - create new folder with name `hostname-1` like
-      - store data here
-   */
-
-  // https://flaviocopes.com/how-to-check-if-file-exists-node/
+  console.log(requestOptions);
 
   try {
     if (fs.existsSync(`./parseResults/${directoryName}`)) {
       console.log("[✔] Directory exists");
     } else {
-      console.log(
-        `[ ] Directory for files does not exists. Creating.`
-      );
+      console.log(`[ ] Directory for files does not exists. Creating.`);
       fs.mkdir(`${__dirname}/parseResults/${directoryName}`, (err) => {
         if (err) {
           return console.error(err);
@@ -121,7 +111,7 @@ function main(url, depthOfParsing = 1) {
 
   sendHttpRequest(requestOptions).then((result) => {
     // saving raw file
-    writeFile(result, directoryName, domainName, `original-raw`);
+    writeFile(result, directoryName, hostname, `original-raw`);
 
     // building links.json object
     let linksAsObj = parseLinks(requestOptions, result);
@@ -130,7 +120,7 @@ function main(url, depthOfParsing = 1) {
     writeFile(
       JSON.stringify(linksAsObj),
       directoryName,
-      domainName,
+      hostname,
       `original-links.json`
     );
     // FIXME -> writeFile(JSON.stringify(linksAsObj), `${options.hostname}-links.json`, "parseResults");
