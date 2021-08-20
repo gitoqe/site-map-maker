@@ -14,9 +14,8 @@ main(URL, DEPTH);
  * @returns {boolean}
  */
 function isUrlCorrect(url) {
-  const regexpCorrectUrl = /*  process.argv[3]
-  ? process.argv[3]
-  :  */ /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/;
+  const regexpCorrectUrl =
+    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/;
 
   if (regexpCorrectUrl.test(url)) {
     console.log(`[✔] Correct URL: ${url}`);
@@ -30,6 +29,7 @@ function isUrlCorrect(url) {
 }
 
 /*
+  TODO parse from JSON to UML
   https://nodejs.org/api/fs.html#fs_fspromises_readdir_path_options
   https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
   @startuml
@@ -38,12 +38,9 @@ function isUrlCorrect(url) {
 */
 
 /**
- *
+ * Extract hostname and path from url
  * @param {String} url
  * @returns hostname, path
- *
- *
- * https://en.wikipedia.org/wiki/URL
  */
 function disassembleUrl(url) {
   url = url.replace(/http[s]?:\/\/www.|http[s]?:\/\//, "");
@@ -56,12 +53,12 @@ function disassembleUrl(url) {
 }
 
 /**
- *
+ * Main function
  * @param {string} url
  * @param {number} depthOfParsing
- * @returns
  */
 function main(url, depthOfParsing = 1) {
+  //TODO use depth
   // 1. Check URL
   if (!isUrlCorrect(url)) return;
 
@@ -72,7 +69,7 @@ function main(url, depthOfParsing = 1) {
   let today = new Date();
   const directoryName =
     hostname +
-    path.split('/').join('-') +
+    path.split("/").join("-") +
     "-" +
     today.getDate() +
     (today.getMonth() + 1) +
@@ -81,14 +78,12 @@ function main(url, depthOfParsing = 1) {
     today.getHours() +
     today.getMinutes() +
     today.getSeconds();
-  //console.log(directoryName);
 
   let requestOptions = {
     hostname: hostname,
     path: path,
     method: "GET",
   };
-  console.log(requestOptions);
 
   try {
     if (fs.existsSync(`./parseResults/${directoryName}`)) {
@@ -124,7 +119,6 @@ function main(url, depthOfParsing = 1) {
       hostname,
       `original-links.json`
     );
-    // FIXME -> writeFile(JSON.stringify(linksAsObj), `${options.hostname}-links.json`, "parseResults");
   });
 }
 
