@@ -16,15 +16,15 @@ main(URL, DEPTH);
 function isUrlCorrect(url) {
   const regexpCorrectUrl = /*  process.argv[3]
   ? process.argv[3]
-  :  */ /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+  :  */ /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/;
 
   if (regexpCorrectUrl.test(url)) {
     console.log(`[✔] Correct URL: ${url}`);
     return true;
   } else {
     console.log(`[✖] incorrect URL: ${url}`);
-    console.log(`Mask is: HTTP(s)://abcd.efg.xyz/`);
-    console.log(`You can set your own regexp as second argument`);
+    console.log(`Mask is: https://ihateregex.io/expr/url/`);
+    //console.log(`You can set your own regexp as second argument`);
     return false;
   }
 }
@@ -54,6 +54,16 @@ function main(url, depthOfParsing = 1) {
   // 1. check URL
   if (!isUrlCorrect(url)) return;
 
+  // 2. Creating folder for results
+  // Name contains: 
+  // TODO cut URL by "/" -> разбивка URL по слешам -> сохранение папки с именем + время/дата обращения ?
+  let today = new Date()
+  let launchTime = 5;
+   console.log(today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate())
+  console.log(today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds())
+  // TODO multiple calls for resource -> different directories?
+  // TODO сохранение пути к файлам в отдельную переменную, передача при writeFile
+
   let options = {
     hostname: URL,
     path: "/",
@@ -74,12 +84,6 @@ function main(url, depthOfParsing = 1) {
   // https://flaviocopes.com/how-to-check-if-file-exists-node/
 
   try {
-    // TODO несколько обращений к ресурсу - несколько каталогов ?
-
-    // TODO разбивка URL по слешам -> сохранение папки с именем + время/дата обращения ?
-
-    // TODO сохранение пути к файлам в отдельную переменную, передача при writeFile
-
     if (fs.existsSync(`./parseResults/${options.hostname}`)) {
       console.log("[✔] Directory exists");
     } else {
