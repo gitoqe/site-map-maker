@@ -28,15 +28,6 @@ function isUrlCorrect(url) {
   }
 }
 
-/*
-  TODO parse from JSON to UML
-  https://nodejs.org/api/fs.html#fs_fspromises_readdir_path_options
-  https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
-  @startuml
-  Bob -> Alice : hello
-  @enduml
-*/
-
 /**
  * Extract hostname and path from url
  * @param {String} url
@@ -103,23 +94,46 @@ function main(url, depthOfParsing = 1) {
   }
 
   // https://nodejs.dev/learn/making-http-requests-with-nodejs
-  // options for request
-
-  sendHttpRequest(requestOptions).then((result) => {
+  // returns Promise
+  let mainPageLinks = sendHttpRequest(requestOptions).then((result) => {
     // saving raw file
-    writeFile(result, directoryName, hostname, `original-raw`);
+    writeFile(result, directoryName, hostname, `original-raw`).then(
+      (successMessage) => {
+        console.log(successMessage);
+      }
+    );
 
     // building links.json object
-    let linksAsObj = parseLinks(requestOptions, result);
+    let linksAsObject = parseLinks(requestOptions, result);
 
     // saving links.json file
     writeFile(
-      JSON.stringify(linksAsObj),
+      JSON.stringify(linksAsObject),
       directoryName,
       hostname,
       `original-links.json`
-    );
+    ).then((successMessage) => {
+      console.log(successMessage);
+    });
+    return linksAsObject;
   });
+
+  mainPageLinks.then((list) => {
+    console.log(list);
+  });
+
+  // TODO check promises
+  // TODO recursive work with links, using DEPTH
+  //console.log(linksAsObject);
+
+  /*
+  TODO parse from JSON to UML
+  https://nodejs.org/api/fs.html#fs_fspromises_readdir_path_options
+  https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
+  @startuml
+  Bob -> Alice : hello
+  @enduml
+*/
 }
 
 /**
@@ -128,10 +142,12 @@ function main(url, depthOfParsing = 1) {
  * @returns Promise
  */
 function sendHttpRequest(requestOptions) {
+  // https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/Promise
   return new Promise((resolve, reject) => {
     const request = http.request(requestOptions, (response) => {
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        return reject(new Error(`Error status code: ${response.statusCode}`));
+        // return ?
+        reject(new Error(`Error status code: ${response.statusCode}`));
       }
 
       // saving data
@@ -168,13 +184,16 @@ function sendHttpRequest(requestOptions) {
  * @param {String} fileSubName What is inside
  */
 function writeFile(data, directoryName, fileName, fileSubName) {
-  let path = `${__dirname}/parseResults/${directoryName}/${fileName}-${fileSubName}`;
-  fs.writeFile(path, data, (err) => {
-    if (err) {
-      return console.log(`[✖] error with save: ${err}`);
-    } else {
-      console.log(`[✔] File saved as: ${path}`);
-    }
+  // https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/Promise
+  return new Promise((resolve, reject) => {
+    let path = `${__dirname}/parseResults/${directoryName}/${fileName}-${fileSubName}`;
+    fs.writeFile(path, data, (err) => {
+      if (err) {
+        reject(`[✖] Error with file saving: ${err}`);
+      } else {
+        resolve(`[✔] File saved as: ${path}`);
+      }
+    });
   });
 }
 
@@ -193,16 +212,16 @@ function parseLinks(options, data) {
   let listOfLinkNodes = parsedDom.getElementsByTagName("a");
   // FIXME use this in function?
   let pageTitle = getTitleFromRawHTMl(data);
-  linksObject["baseUrl"] = resourseUrl;
+  //linksObject["baseUrl"] = resourseUrl;
   linksObject[resourseUrl] = [];
 
   listOfLinkNodes = filterLinks(listOfLinkNodes, resourseUrl);
 
   // write to JSON
   listOfLinkNodes.forEach((element) => {
-    linksObject[resourseUrl].push({
-      target: element,
-    });
+    let temp = {};
+    temp[element] = [];
+    linksObject[resourseUrl].push(temp);
   });
   return linksObject;
 }
@@ -251,14 +270,21 @@ function filterLinks(list, linksUrl) {
 
     // delete links that looks not like original Url
     if (list[i].search(regexpUrlLike) == -1) {
-      console.log(`Link deleted: ${list[i]}`);
+      console.log(`Link deleted: ${list[i]}. Case: not like original url`);
       delete list[i];
       continue;
     }
 
-    //delete mailto:
+    // delete mailto:
     if (list[i].search(regexpMailto) != -1) {
-      console.log(`Link deleted: ${list[i]}`);
+      console.log(`Link deleted: ${list[i]}. Case: mailto`);
+      delete list[i];
+      continue;
+    }
+
+    // delete same self-link
+    if (list[i] == linksUrl) {
+      console.log(`Link deleted: ${list[i]}. Case: recursive`);
       delete list[i];
       continue;
     }
