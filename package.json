@@ -19,5 +19,10 @@
   "homepage": "https://github.com/gitoqe/site-map-maker#readme",
   "dependencies": {
     "dom-parser": "^0.1.6"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^8.3.0"
   }
 }
