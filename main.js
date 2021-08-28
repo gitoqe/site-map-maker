@@ -11,7 +11,7 @@ main(URL, DEPTH);
 /**
  * Check is URL correct or not?
  * @param {string} url
- * @returns {boolean}
+ * @return {boolean}
  */
 function isUrlCorrect(url) {
   const regexpCorrectUrl =
@@ -23,7 +23,7 @@ function isUrlCorrect(url) {
   } else {
     console.log(`[✖] incorrect URL: ${url}`);
     console.log(`Used mask is: https://ihateregex.io/expr/url/`);
-    //console.log(`You can set your own regexp as second argument`);
+    // console.log(`You can set your own regexp as second argument`);
     return false;
   }
 }
@@ -31,11 +31,11 @@ function isUrlCorrect(url) {
 /**
  * Extract hostname and path from url
  * @param {String} url
- * @returns hostname, path
+ * @return {*} hostname, path
  */
 function disassembleUrl(url) {
   url = url.replace(/http[s]?:\/\/www.|http[s]?:\/\//, "");
-  let hostname = url.split("/")[0];
+  const hostname = url.split("/")[0];
   let path = "/";
   if (url.indexOf("/") != -1) {
     path = url.slice(url.indexOf("/"));
@@ -49,18 +49,18 @@ function disassembleUrl(url) {
  * @param {number} depthOfParsing
  */
 function main(url, depthOfParsing = 1) {
-  //TODO use depth
+  // TODO use depth
   // 1. Check URL
   if (!isUrlCorrect(url)) return;
 
   // 2.1 Extract hostname and path from url
-  const { hostname, path } = disassembleUrl(url);
+  const { hostname: mainHostname, path: mainPath } = disassembleUrl(url);
 
   // 2.2 Add current time and date to directiry name
-  let today = new Date();
+  const today = new Date();
   const directoryName =
-    hostname +
-    path.split("/").join("-") +
+    mainHostname +
+    mainPath.split("/").join("-") +
     "-" +
     today.getDate() +
     (today.getMonth() + 1) +
@@ -71,8 +71,8 @@ function main(url, depthOfParsing = 1) {
     today.getSeconds();
 
   let requestOptions = {
-    hostname: hostname,
-    path: path,
+    hostname: mainHostname,
+    path: mainPath,
     method: "GET",
   };
 
@@ -95,36 +95,108 @@ function main(url, depthOfParsing = 1) {
 
   // https://nodejs.dev/learn/making-http-requests-with-nodejs
   // returns Promise
-  let mainPageLinks = sendHttpRequest(requestOptions).then((result) => {
+  const mainPageLinks = sendHttpRequest(requestOptions).then((result) => {
     // saving raw file
-    writeFile(result, directoryName, hostname, `original-raw`).then(
+    writeToFile(result, directoryName, mainHostname, `original-raw`).then(
       (successMessage) => {
-        console.log(successMessage);
+        // console.log(successMessage);
       }
     );
 
     // building links.json object
-    let linksAsObject = parseLinks(requestOptions, result);
+    const linksAsObject = parseLinks(requestOptions, result);
 
     // saving links.json file
-    writeFile(
+    writeToFile(
       JSON.stringify(linksAsObject),
       directoryName,
-      hostname,
+      mainHostname,
       `original-links.json`
     ).then((successMessage) => {
-      console.log(successMessage);
+      // console.log(successMessage);
     });
     return linksAsObject;
   });
 
-  mainPageLinks.then((list) => {
-    console.log(list);
+  mainPageLinks.then((listOfLinks) => {
+    return
+    console.log(`[ ] Current depth of parsing = ${depthOfParsing}.`);
+    console.log(listOfLinks);
+    const currentBaseNode = Object.keys(listOfLinks)[0];
+    console.log(`[ ] Current key: ${currentBaseNode}`);
+    for (let i = 0; i < listOfLinks[currentBaseNode].length; i++) {
+      const currentNode = listOfLinks[currentBaseNode][i];
+      console.log(currentNode);
+      const currentNodeKeys = Object.keys(currentNode)[0];
+      console.log(currentNodeKeys);
+    }
+
+    while (depthOfParsing == 1) {
+      console.log(`[ ] Current depth of parsing = ${depthOfParsing}.`);
+      // console.log(listOfLinks)
+      const currentKey = Object.keys(listOfLinks)[0];
+      console.log(`[ ] Current key: ${currentKey}`);
+
+      for (let i = 0; i < listOfLinks[currentKey].length; i++) {
+        const currentSubLink = listOfLinks[currentKey][i];
+        const currentLink = Object.keys(listOfLinks)[0];
+        console.log(currentSubLink);
+
+        const { hostname: currentHostname, path: currentPath } =
+          disassembleUrl(currentLink);
+        requestOptions = {
+          hostname: currentHostname,
+          path: currentPath,
+          method: "GET",
+        };
+        const subLinksList = sendHttpRequest(requestOptions).then((result) => {
+          // building links.json object
+          const linksAsObject = parseLinks(requestOptions, result);
+
+          // saving links.json file
+          writeToFile(
+            JSON.stringify(linksAsObject),
+            directoryName,
+            currentHostname,
+            `original-links.json`
+          ).then((successMessage) => {
+            // console.log(successMessage);
+          });
+
+          const jsonPath = `${__dirname}/parseResults/${directoryName}/${mainHostname}-original-links.json`;
+          fs.appendFileSync(
+            jsonPath,
+            JSON.stringify(linksAsObject),
+            function (err) {
+              if (err) throw err;
+              console.log("Saved!");
+            }
+          );
+
+          return linksAsObject;
+        });
+
+        console.log(currentSubLink);
+        console.log("[]");
+        console.log("[]");
+        console.log("[]");
+        console.log("[]");
+      }
+      // if (Object.keys(listOfLinks).indexOf())
+      // Object.keys(list)
+      break;
+    }
+    /* if (depthOfParsing > 1){
+      console.log(`[ ] Depth of parsing = ${depthOfParsing}. Into the rabbit hole`)
+    }else{
+      console.log(`[✔] Depth of parsing = ${depthOfParsing}. Parsing finished`)
+    } */
+    // console.log(list);
   });
 
   // TODO check promises
   // TODO recursive work with links, using DEPTH
-  //console.log(linksAsObject);
+  // console.log(linksAsObject);
 
   /*
   TODO parse from JSON to UML
@@ -139,7 +211,7 @@ function main(url, depthOfParsing = 1) {
 /**
  * HTTP GET request
  * @param {object} requestOptions Parameters for HTTP request
- * @returns Promise
+ * @return {*} Promise
  */
 function sendHttpRequest(requestOptions) {
   // https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/Promise
@@ -159,7 +231,7 @@ function sendHttpRequest(requestOptions) {
       // resolving on end
       response.on("end", () => {
         try {
-          //rawData = JSON.parse(rawData.toString());
+          // rawData = JSON.parse(rawData.toString());
         } catch (error) {
           reject(error);
         }
@@ -182,14 +254,14 @@ function sendHttpRequest(requestOptions) {
  * @param {String} directoryName Name of directory
  * @param {String} fileName Name of file
  * @param {String} fileSubName What is inside
+ * @return {Promise}
  */
-function writeFile(data, directoryName, fileName, fileSubName) {
-  // https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/Promise
+function writeToFile(data, directoryName, fileName, fileSubName) {
   return new Promise((resolve, reject) => {
-    let path = `${__dirname}/parseResults/${directoryName}/${fileName}-${fileSubName}`;
+    const path = `${__dirname}/parseResults/${directoryName}/${fileName}-${fileSubName}`;
     fs.writeFile(path, data, (err) => {
       if (err) {
-        reject(`[✖] Error with file saving: ${err}`);
+        reject(new Error (`[✖] Error with file saving: ${err}`));
       } else {
         resolve(`[✔] File saved as: ${path}`);
       }
@@ -201,25 +273,25 @@ function writeFile(data, directoryName, fileName, fileSubName) {
  * Make JSON object
  * @param {*} options Request options
  * @param {*} data Request answer data
- * @returns {*} Object in JSON format
+ * @return {*} Object in JSON format
  */
 function parseLinks(options, data) {
   // forming object
-  let linksObject = {};
-  let resourseUrl = options.hostname;
+  const linksObject = {};
+  const resourseUrl = options.hostname;
 
-  let parsedDom = parser.parseFromString(data);
+  const parsedDom = parser.parseFromString(data);
   let listOfLinkNodes = parsedDom.getElementsByTagName("a");
   // FIXME use this in function?
-  let pageTitle = getTitleFromRawHTMl(data);
-  //linksObject["baseUrl"] = resourseUrl;
+  // const pageTitle = getTitleFromRawHTMl(data);
+  // linksObject["baseUrl"] = resourseUrl;
   linksObject[resourseUrl] = [];
 
   listOfLinkNodes = filterLinks(listOfLinkNodes, resourseUrl);
 
   // write to JSON
   listOfLinkNodes.forEach((element) => {
-    let temp = {};
+    const temp = {};
     temp[element] = [];
     linksObject[resourseUrl].push(temp);
   });
@@ -229,7 +301,7 @@ function parseLinks(options, data) {
 /**
  * Extract title from html text
  * @param {string} rawData html text
- * @returns
+ * @return {string}
  */
 function getTitleFromRawHTMl(rawData) {
   let result = rawData.match(/<[titleTITLE]*>[\s\S]+<\/[titleTITLE]*>/);
@@ -241,7 +313,7 @@ function getTitleFromRawHTMl(rawData) {
  * Filter list of links
  * @param {*} list List of <a> objects
  * @param {*} linksUrl Webpage url
- * @returns Filtered list
+ * @return {[]} Filtered list
  */
 function filterLinks(list, linksUrl) {
   const regexpHTTP = /http[s]?:\/\/www.|http[s]?:\/\//;
