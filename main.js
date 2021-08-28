@@ -6,6 +6,22 @@ const parser = new DomParser();
 const URL = process.argv[2].toLowerCase();
 const DEPTH = process.argv[3];
 
+/**
+ * Class for request options
+ */
+class RequestOptions {
+  /**
+   * Create options object
+   * @param {string} hostname
+   * @param {string} path
+   */
+  constructor(hostname, path) {
+    this.hostname = hostname;
+    this.path = path;
+    this.method = "GET";
+  }
+}
+
 main(URL, DEPTH);
 
 /**
@@ -81,11 +97,7 @@ function main(url, depthOfParsing = 1) {
   // 2.2 Add current time and date to directiry name
   const directoryName = concatNameAndDate(mainHostname, mainPath);
 
-  let requestOptions = {
-    hostname: mainHostname,
-    path: mainPath,
-    method: "GET",
-  };
+  let requestOptions = new RequestOptions(mainHostname, mainPath);
 
   try {
     if (fs.existsSync(`./parseResults/${directoryName}`)) {
