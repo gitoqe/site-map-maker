@@ -44,6 +44,28 @@ function disassembleUrl(url) {
 }
 
 /**
+ * Concat Name and Path with Date
+ * @param {string} name
+ * @param {string} path
+ * @return {string} formated srting
+ */
+function concatNameAndDate(name, path) {
+  const today = new Date();
+  return (
+    name +
+    path.split("/").join("-") +
+    "-" +
+    today.getDate() +
+    (today.getMonth() + 1) +
+    today.getFullYear() +
+    "." +
+    today.getHours() +
+    today.getMinutes() +
+    today.getSeconds()
+  );
+}
+
+/**
  * Main function
  * @param {string} url
  * @param {number} depthOfParsing
@@ -57,18 +79,7 @@ function main(url, depthOfParsing = 1) {
   const { hostname: mainHostname, path: mainPath } = disassembleUrl(url);
 
   // 2.2 Add current time and date to directiry name
-  const today = new Date();
-  const directoryName =
-    mainHostname +
-    mainPath.split("/").join("-") +
-    "-" +
-    today.getDate() +
-    (today.getMonth() + 1) +
-    today.getFullYear() +
-    "." +
-    today.getHours() +
-    today.getMinutes() +
-    today.getSeconds();
+  const directoryName = concatNameAndDate(mainHostname, mainPath);
 
   let requestOptions = {
     hostname: mainHostname,
@@ -119,7 +130,7 @@ function main(url, depthOfParsing = 1) {
   });
 
   mainPageLinks.then((listOfLinks) => {
-    return
+    return;
     console.log(`[ ] Current depth of parsing = ${depthOfParsing}.`);
     console.log(listOfLinks);
     const currentBaseNode = Object.keys(listOfLinks)[0];
@@ -261,7 +272,7 @@ function writeToFile(data, directoryName, fileName, fileSubName) {
     const path = `${__dirname}/parseResults/${directoryName}/${fileName}-${fileSubName}`;
     fs.writeFile(path, data, (err) => {
       if (err) {
-        reject(new Error (`[✖] Error with file saving: ${err}`));
+        reject(new Error(`[✖] Error with file saving: ${err}`));
       } else {
         resolve(`[✔] File saved as: ${path}`);
       }
