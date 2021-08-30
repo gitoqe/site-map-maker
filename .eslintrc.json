@@ -9,6 +9,10 @@
     "ecmaVersion": 12
   },
   "rules": {
-    "max-lines-per-function": ["warn", { "max": 20, "skipBlankLines": true, "skipComments": true }]
+    "max-lines-per-function": [
+      "warn",
+      { "max": 20, "skipBlankLines": true, "skipComments": true }
+    ],
+    "complexity": ["error", 10]
   }
 }
