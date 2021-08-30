@@ -82,6 +82,31 @@ function concatNameAndDate(name, path) {
 }
 
 /**
+ * Creating directory "parseResults" and subdirectory with given name
+ * @param {string} name Name of directory
+ */
+function createDirectory(name) {
+  try {
+    if (!fs.existsSync(`./parseResults/`)) {
+      fs.mkdir(`${__dirname}/parseResults/`, (err) => console.error(err));
+    }
+    if (!fs.existsSync(`./parseResults/${name}`)) {
+      console.log(`[ ] Directory for files does not exists. Creating.`);
+      fs.mkdir(`${__dirname}/parseResults/${name}`, (err) => {
+        if (err) {
+          return console.error(err); // FIXME is this correct place for return?
+        }
+        console.log(`[✔] Directory "${name}" created successfully!`);
+      });
+    } else {
+      console.log("[✔] Directory exists");
+    }
+  } catch (err) {
+    console.error("[✖] Error with directory creation:", err);
+  }
+}
+
+/**
  * Main function
  * @param {string} url
  * @param {number} depthOfParsing
@@ -99,22 +124,7 @@ function main(url, depthOfParsing = 1) {
 
   let requestOptions = new RequestOptions(mainHostname, mainPath);
 
-  try {
-    if (fs.existsSync(`./parseResults/${directoryName}`)) {
-      console.log("[✔] Directory exists");
-    } else {
-      console.log(`[ ] Directory for files does not exists. Creating.`);
-      fs.mkdir(`${__dirname}/parseResults/${directoryName}`, (err) => {
-        if (err) {
-          return console.error(err);
-        }
-        console.log(`[✔] Directory "${directoryName}" created successfully!`);
-      });
-    }
-  } catch (err) {
-    console.log("[✖] Error with directory creation:");
-    console.error(err);
-  }
+  createDirectory(directoryName);
 
   // https://nodejs.dev/learn/making-http-requests-with-nodejs
   // returns Promise
