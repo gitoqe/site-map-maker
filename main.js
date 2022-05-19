@@ -122,68 +122,69 @@ function createDirectory(name) {
  * @return {object}
  */
 function handleLink(givenUrl, givenDepth) {
-    if (givenDepth === 0) {
-        return;
-    }
+    console.log(`\nhandleLink() = ${givenUrl} ${givenDepth}`)
+    // if (givenDepth === 0) {
+    //     return;
+    // }
 
     // 2.1 Extract hostname and path from url
     const { hostname: mainHostname, path: mainPath } = disassembleUrl(givenUrl);
 
     // 2.2 Add current time and date to directiry name
     const directoryName = concatNameAndDate(mainHostname, mainPath);
+    createDirectory(directoryName);
 
     const requestOptions = new RequestOptions(mainHostname, mainPath);
 
-    createDirectory(directoryName);
-
     // https://nodejs.dev/learn/making-http-requests-with-nodejs
     // returns Promise
-    const links = sendHttpRequest(requestOptions).then((result) => {
-        // saving raw file
-        writeToFile(result, directoryName, mainHostname, `original-raw`).then(
-            (successMessage) => {
-                // console.log(successMessage);
-            }
-        );
+    const links = sendHttpRequest(requestOptions)
+        .then((result) => {
+            // saving raw file
+            writeToFile(result, directoryName, mainHostname, `original-raw`)
+                .then((successMessage) => {
+                    // console.log(successMessage);
+                });
 
-        // building links.json object
-        const linksAsObject = parseLinks(requestOptions, result);
+            // building links.json object
+            const linksAsObject = parseLinks(requestOptions, result);
 
-        // saving links.json file
-        writeToFile(
-            JSON.stringify(linksAsObject),
-            directoryName,
-            mainHostname,
-            `original-links.json`
-        ).then((successMessage) => {
-        // console.log(successMessage);
+            // saving links.json file
+            writeToFile(
+                JSON.stringify(linksAsObject),
+                directoryName,
+                mainHostname,
+                `original-links.json`
+            )
+                .then((successMessage) => {
+                    // console.log(successMessage);
+                });
+            return linksAsObject;
         });
-        return linksAsObject;
-    });
-
+    
     return links;
 }
 
 /**
  * Main function
  * @param {string} url
- * @param {number} depthOfParsing
+ * @param {number} depth
  */
-function main(url, depthOfParsing = 1) {
-    console.log(`Initial params:\nURL: ${url}\nDepth:${depthOfParsing}\n`)
+function main(url, depth = 1) {
+    console.log(`Initial params:\nURL: ${url}\nDepth:${depth}\n`)
+    // let depthOfParsing = depth;
 
     // TODO use depth
     // 1. Check URL
     if (!isUrlCorrect(url)) return;
 
-    const handledMainPageLinks = handleLink(url, depthOfParsing);
+    const handledMainPageLinks = handleLink(url, depth);
 
     
 
     handledMainPageLinks.then((links) => {
         console.log('\nMain finished. Time to go deeper')
-        console.log(links)
-        return;
+        // console.log(links)
     });
 
     // TODO check promises
