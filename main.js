@@ -170,6 +170,8 @@ function handleLink(givenUrl, givenDepth) {
  * @param {number} depthOfParsing
  */
 function main(url, depthOfParsing = 1) {
+  console.log(`Initial params:\nURL: ${url}\nDepth:${depthOfParsing}\n`)
+
   // TODO use depth
   // 1. Check URL
   if (!isUrlCorrect(url)) return;
@@ -179,7 +181,7 @@ function main(url, depthOfParsing = 1) {
   
 
   handledMainPageLinks.then((links) => {
-    console.log('\n\nMain finished. Time to go deeper')
+    console.log('\nMain finished. Time to go deeper')
     console.log(links)
     return;
   });
@@ -315,6 +317,9 @@ function filterLinks(list, linksUrl) {
   const regNoslashNourl =
     /^[-a-zA-Z0-9@%_\+~#=]{1,256}\/|^[-a-zA-Z0-9@%_\+~#=]{1,256}.html/;
 
+    console.log(`Filtering: ${linksUrl}`);
+    console.log(`- before filter: ${list.length}`);
+
   for (let i = 0; i < list.length; i++) {
     // extract href from <a>
     list[i] = list[i].getAttribute("href");
@@ -332,28 +337,28 @@ function filterLinks(list, linksUrl) {
 
     // delete links that looks not like original Url
     if (list[i].search(regexpUrlLike) == -1) {
-      console.log(`Link deleted: ${list[i]}. Case: not like original url`);
+      // console.log(`Link deleted: ${list[i]}. Case: not like original url`);
       delete list[i];
       continue;
     }
 
     // delete mailto:
     if (list[i].search(regexpMailto) != -1) {
-      console.log(`Link deleted: ${list[i]}. Case: mailto`);
+      // console.log(`Link deleted: ${list[i]}. Case: mailto`);
       delete list[i];
       continue;
     }
 
     // NO jpg/pdf/png/jpeg
     if (list[i].search(/(?:jpg|png|jpeg|pdf)$/) != -1) {
-      console.log(`Link deleted: ${list[i]}. Case: file`);
+      // console.log(`Link deleted: ${list[i]}. Case: file`);
       delete list[i];
       continue;
     }
 
     // delete same self-link
     if (list[i] == linksUrl) {
-      console.log(`Link deleted: ${list[i]}. Case: recursive`);
+      // console.log(`Link deleted: ${list[i]}. Case: recursive`);
       delete list[i];
       continue;
     }
@@ -365,6 +370,6 @@ function filterLinks(list, linksUrl) {
     return list.indexOf(item) == pos;
   });
 
-  console.log(`\nTotal number of links: ${list.length}\n`);
+  console.log(`- after filter: ${list.length}`);
   return list;
 }
