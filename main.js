@@ -3,7 +3,16 @@ const fs = require("fs"); // filesystem
 const DomParser = require("dom-parser");
 const parser = new DomParser();
 
-const URL = process.argv[2].toLowerCase();
+let URL = ''
+try {
+  if (process.argv[2] == undefined)
+    throw new Error('Url is not set');
+  URL = process.argv[2].toLowerCase();
+} catch (error) {
+  // console.log(error)
+  return;
+}
+
 const DEPTH = process.argv[3];
 
 /**
@@ -38,7 +47,7 @@ function isUrlCorrect(url) {
     return true;
   } else {
     console.log(`[✖] incorrect URL: ${url}`);
-    console.log(`Used mask is: https://ihateregex.io/expr/url/`);
+    console.log(`Used mask is like: https://ihateregex.io/expr/url/`);
     // console.log(`You can set your own regexp as second argument`);
     return false;
   }
@@ -152,6 +161,7 @@ function main(url, depthOfParsing = 1) {
   });
 
   mainPageLinks.then((listOfLinks) => {
+    console.log('\n\nMain finished. Time to go deeper')
     return;
     console.log(`[ ] Current depth of parsing = ${depthOfParsing}.`);
     console.log(listOfLinks);
@@ -387,6 +397,13 @@ function filterLinks(list, linksUrl) {
       continue;
     }
 
+    // NO jpg/pdf/png/jpeg
+    if (list[i].search(/(?:jpg|png|jpeg|pdf)$/) != -1) {
+      console.log(`Link deleted: ${list[i]}. Case: file`);
+      delete list[i];
+      continue;
+    }
+
     // delete same self-link
     if (list[i] == linksUrl) {
       console.log(`Link deleted: ${list[i]}. Case: recursive`);
@@ -400,5 +417,6 @@ function filterLinks(list, linksUrl) {
     return list.indexOf(item) == pos;
   });
 
+  console.log(`\nTotal number of links: ${list.length}\n`);
   return list;
 }
