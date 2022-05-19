@@ -116,28 +116,29 @@ function createDirectory(name) {
 }
 
 /**
- * Main function
- * @param {string} url
- * @param {number} depthOfParsing
+ * Link handler
+ * @param {string} givenUrl 
+ * @param {number} givenDepth 
+ * @return {object}
  */
-function main(url, depthOfParsing = 1) {
-  // TODO use depth
-  // 1. Check URL
-  if (!isUrlCorrect(url)) return;
+function handleLink(givenUrl, givenDepth) {
+  if (givenDepth === 0) {
+    return;
+  }
 
   // 2.1 Extract hostname and path from url
-  const { hostname: mainHostname, path: mainPath } = disassembleUrl(url);
+  const { hostname: mainHostname, path: mainPath } = disassembleUrl(givenUrl);
 
   // 2.2 Add current time and date to directiry name
   const directoryName = concatNameAndDate(mainHostname, mainPath);
 
-  let requestOptions = new RequestOptions(mainHostname, mainPath);
+  const requestOptions = new RequestOptions(mainHostname, mainPath);
 
   createDirectory(directoryName);
 
   // https://nodejs.dev/learn/making-http-requests-with-nodejs
   // returns Promise
-  const mainPageLinks = sendHttpRequest(requestOptions).then((result) => {
+  const links = sendHttpRequest(requestOptions).then((result) => {
     // saving raw file
     writeToFile(result, directoryName, mainHostname, `original-raw`).then(
       (successMessage) => {
@@ -160,81 +161,27 @@ function main(url, depthOfParsing = 1) {
     return linksAsObject;
   });
 
-  mainPageLinks.then((listOfLinks) => {
+  return links;
+}
+
+/**
+ * Main function
+ * @param {string} url
+ * @param {number} depthOfParsing
+ */
+function main(url, depthOfParsing = 1) {
+  // TODO use depth
+  // 1. Check URL
+  if (!isUrlCorrect(url)) return;
+
+  const handledMainPageLinks = handleLink(url, depthOfParsing);
+
+  
+
+  handledMainPageLinks.then((links) => {
     console.log('\n\nMain finished. Time to go deeper')
+    console.log(links)
     return;
-    console.log(`[ ] Current depth of parsing = ${depthOfParsing}.`);
-    console.log(listOfLinks);
-    const currentBaseNode = Object.keys(listOfLinks)[0];
-    console.log(`[ ] Current key: ${currentBaseNode}`);
-    for (let i = 0; i < listOfLinks[currentBaseNode].length; i++) {
-      const currentNode = listOfLinks[currentBaseNode][i];
-      console.log(currentNode);
-      const currentNodeKeys = Object.keys(currentNode)[0];
-      console.log(currentNodeKeys);
-    }
-
-    while (depthOfParsing == 1) {
-      console.log(`[ ] Current depth of parsing = ${depthOfParsing}.`);
-      // console.log(listOfLinks)
-      const currentKey = Object.keys(listOfLinks)[0];
-      console.log(`[ ] Current key: ${currentKey}`);
-
-      for (let i = 0; i < listOfLinks[currentKey].length; i++) {
-        const currentSubLink = listOfLinks[currentKey][i];
-        const currentLink = Object.keys(listOfLinks)[0];
-        console.log(currentSubLink);
-
-        const { hostname: currentHostname, path: currentPath } =
-          disassembleUrl(currentLink);
-        requestOptions = {
-          hostname: currentHostname,
-          path: currentPath,
-          method: "GET",
-        };
-        const subLinksList = sendHttpRequest(requestOptions).then((result) => {
-          // building links.json object
-          const linksAsObject = parseLinks(requestOptions, result);
-
-          // saving links.json file
-          writeToFile(
-            JSON.stringify(linksAsObject),
-            directoryName,
-            currentHostname,
-            `original-links.json`
-          ).then((successMessage) => {
-            // console.log(successMessage);
-          });
-
-          const jsonPath = `${__dirname}/parseResults/${directoryName}/${mainHostname}-original-links.json`;
-          fs.appendFileSync(
-            jsonPath,
-            JSON.stringify(linksAsObject),
-            function (err) {
-              if (err) throw err;
-              console.log("Saved!");
-            }
-          );
-
-          return linksAsObject;
-        });
-
-        console.log(currentSubLink);
-        console.log("[]");
-        console.log("[]");
-        console.log("[]");
-        console.log("[]");
-      }
-      // if (Object.keys(listOfLinks).indexOf())
-      // Object.keys(list)
-      break;
-    }
-    /* if (depthOfParsing > 1){
-      console.log(`[ ] Depth of parsing = ${depthOfParsing}. Into the rabbit hole`)
-    }else{
-      console.log(`[✔] Depth of parsing = ${depthOfParsing}. Parsing finished`)
-    } */
-    // console.log(list);
   });
 
   // TODO check promises
@@ -412,6 +359,7 @@ function filterLinks(list, linksUrl) {
     }
   }
 
+  // Use dict?
   // erase duplicates
   list = list.filter(function (item, pos) {
     return list.indexOf(item) == pos;
