@@ -11,8 +11,14 @@
   "rules": {
     "max-lines-per-function": [
       "warn",
-      { "max": 20, "skipBlankLines": true, "skipComments": true }
+      {
+        "max": 50,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
     ],
-    "complexity": ["error", 10]
+    "complexity": ["error", 10],
+    "indent": ["warn", 4],
+    "max-len": ["warn", 120]
   }
 }
