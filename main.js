@@ -4,7 +4,11 @@ const DomParser = require("dom-parser");
 const parser = new DomParser();
 
 const { Tree, TreeNode } = require('./tree');
+
+let resultingTree = new Tree('start', '/');
+
 const { RequestOptions } = require('./requestOptions');
+const { hostname } = require("os");
 
 let URL = ''
 try {
@@ -110,16 +114,25 @@ function createDirectory(name) {
  * Link handler
  * @param {string} givenUrl 
  * @param {number} givenDepth 
+ * @param {string} parentUrl
  * @return {object}
  */
-function handleLink(givenUrl, givenDepth) {
-    console.log(`\nhandleLink() = ${givenUrl} ${givenDepth}`)
+function handleLink(givenUrl, givenDepth, parentUrl) {
+    console.log(`\nhandleLink() = ${givenUrl} ${givenDepth} ${parentUrl}`)
     // if (givenDepth === 0) {
     //     return;
     // }
 
     // 2.1 Extract hostname and path from url
     const { hostname: mainHostname, path: mainPath } = disassembleUrl(givenUrl);
+
+
+    if (parentUrl == undefined) {
+        console.log('\n> parentUrl ', parentUrl);
+        console.log(mainHostname, mainPath, '\n');
+        parentUrl = mainHostname;
+        resultingTree.insert('start', parentUrl);
+    }
 
     // 2.2 Add current time and date to directiry name
     const directoryName = concatNameAndDate(mainHostname, mainPath);
@@ -139,6 +152,16 @@ function handleLink(givenUrl, givenDepth) {
 
             // building links.json object
             const linksAsObject = parseLinks(requestOptions, result);
+            console.log('linksAsObject', linksAsObject[mainHostname])
+            linksAsObject[mainHostname].forEach(link => {
+                console.log('link', link);
+                let linkUrl =Object.keys(link)[0];
+                console.log(linkUrl); // FIXME - change parser result from object to array
+                if (resultingTree.find(linkUrl) == undefined){
+                    console.log(1)
+                    resultingTree.insert(parentUrl, linkUrl);
+                }
+            });
 
             // saving links.json file
             writeToFile(
@@ -150,11 +173,14 @@ function handleLink(givenUrl, givenDepth) {
                 .then((successMessage) => {
                     // console.log(successMessage);
                 });
+
             return linksAsObject;
         });
     
     return links;
 }
+
+
 
 /**
  * Main function
@@ -169,6 +195,8 @@ function main(url, depth = 1) {
     // 1. Check URL
     if (!isUrlCorrect(url)) return;
 
+    
+
     const handledMainPageLinks = handleLink(url, depth);
 
     
@@ -176,6 +204,7 @@ function main(url, depth = 1) {
     handledMainPageLinks.then((links) => {
         console.log('\nMain finished. Time to go deeper')
         console.log(links)
+        console.log(resultingTree)
     });
 
     // TODO check promises
