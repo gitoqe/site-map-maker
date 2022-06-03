@@ -31,6 +31,68 @@ class RequestOptions {
     }
 }
 
+// TODO links graph by domain
+
+/**
+ * Simple class for single node in a tree
+ */
+class TreeNode {
+    /**
+     * TreeNode constructor
+     * @param {*} key 
+     * @param {*} value 
+     * @param {*} parent 
+     */
+    constructor (key, value = key, parent = null) {
+        this.key = key;
+        this.value = value;
+        this.parent = parent;
+        this.children = [];
+    }
+
+    /**
+     * Is this node a leaf
+     */
+    get isLeaf() {
+        return this.children.length === 0;
+    }
+
+    /**
+     * Is this node has children
+     */
+    get hasChildren() {
+        return !this.isLeaf();
+    }
+}
+
+/**
+ * Simple Tree class using TreeNode class
+ */
+class Tree {
+    /**
+     * Tree constructor
+     * @param {*} key 
+     * @param {*} value 
+     */
+    constructor(key, value = key) {
+        this.root = new TreeNode(key, value);
+    }
+
+
+
+    // insert() {
+
+    // }
+
+    // remove() {
+
+    // }
+
+    // find () {
+        
+    // }
+}
+
 main(URL, DEPTH);
 
 /**
@@ -184,7 +246,7 @@ function main(url, depth = 1) {
 
     handledMainPageLinks.then((links) => {
         console.log('\nMain finished. Time to go deeper')
-        // console.log(links)
+        console.log(links)
     });
 
     // TODO check promises
